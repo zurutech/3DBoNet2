@@ -1,0 +1,9 @@
+h5py
+numpy
+matplotlib
+plyfile
+scipy
+tensorflow
+tensorflow-addons
+tqdm
+gdown
