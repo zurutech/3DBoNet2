@@ -65,9 +65,6 @@ class CloudBlocksDataset:
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size if eval_batch_size else batch_size
 
-        self._cache_path = Path("dataset_cache") / self.name
-        self._cache_path.parent.mkdir(parents=True, exist_ok=True)
-
         self.eval_paths = tuple(
             itertools.chain.from_iterable(
                 self.dataset_path.glob(f"{eval_pattern}*.h5")
@@ -225,7 +222,6 @@ class CloudBlocksDataset:
             ),
             args=(train,),
         )
-        dataset = dataset.cache(str(self._cache_path))
         if train:
             dataset = dataset.shuffle(100, reshuffle_each_iteration=True)
         batch_size = self.batch_size if train else self.eval_batch_size

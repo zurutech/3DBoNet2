@@ -221,7 +221,6 @@ class Trainer:
             )
             self.eval((epoch + 1) * n_batches)
 
-    @tf.function
     def eval(self, log_step: Optional[tf.Tensor] = None) -> None:
         """
         Evaluate the model on the validation set.

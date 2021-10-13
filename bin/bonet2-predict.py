@@ -132,6 +132,8 @@ def main():
                 data.config.semantic_indices, dtype=tf.int32
             )
             instance2original = tf.gather(semantic2original, instance2semantic)
+        write_semantic_segmentation(args.output_dir, input_path, semantic_preds)
+        write_instance_segmentation(args.output_dir, input_path, instance_preds)
         write_predictions(
             args.output_dir,
             input_path,
@@ -159,7 +161,7 @@ def write_semantic_segmentation(
     semantic_dir = Path(output_dir).expanduser() / "semantic"
     semantic_dir.mkdir(parents=True, exist_ok=True)
     scene_name = "_".join(input_path.stem.split("_")[:2])
-    output_instance_path = semantic_dir / f"{scene_name}_semantic.ply"
+    output_semantic_path = semantic_dir / f"{scene_name}_semantic.ply"
     ply_content = PlyData.read(input_path)
     coordinates = rfn.structured_to_unstructured(
         ply_content["vertex"].data, dtype=np.float32
@@ -177,9 +179,53 @@ def write_semantic_segmentation(
     )
     ply_vertices = rfn.merge_arrays((ply_coordinates, ply_colors), flatten=True)
     vertex_element = PlyElement.describe(ply_vertices, "vertex")
-    PlyData([vertex_element, ply_content["face"]], text=True).write(
-        output_instance_path
+    elements = [vertex_element]
+    if "face" in ply_content:
+        elements.append(ply_content["face"])
+    PlyData(elements, text=True).write(output_semantic_path)
+
+
+def write_instance_segmentation(
+    output_dir: Path, input_path: Path, instance_preds: tf.Tensor
+) -> None:
+    """
+    Write instance segmentation predictions on a .ply file.
+    The colors are taken from the colormap tab20 (they can be repeated),
+    see https://matplotlib.org/stable/gallery/color/colormap_reference.html.
+    Points that are not labelled are shown in gray.
+
+    Args:
+        output_dir: Path to output directory.
+        input_path: Path to the input .ply file.
+        semantic_preds: Index of the predicted instance for every point.
+            If a point is not associated to an instance, the index is -1.
+    """
+    instance_dir = Path(output_dir).expanduser() / "instance"
+    instance_dir.mkdir(parents=True, exist_ok=True)
+    scene_name = "_".join(input_path.stem.split("_")[:2])
+    output_instance_path = instance_dir / f"{scene_name}_instance.ply"
+    ply_content = PlyData.read(input_path)
+    coordinates = rfn.structured_to_unstructured(
+        ply_content["vertex"].data, dtype=np.float32
+    )[:, :3]
+    rgb_colors = np.array([plt.cm.tab20(i) for i in range(20)])[:, :3]
+    rgb_colors = (rgb_colors * 255).astype(np.int32)
+    null_color = np.array([128, 128, 128])
+    instance_colors = rgb_colors[instance_preds.numpy() % 20]
+    instance_colors[instance_preds.numpy() == -1] = null_color
+    ply_coordinates = rfn.unstructured_to_structured(
+        coordinates, dtype=np.dtype([("x", "<f4"), ("y", "<f4"), ("z", "<f4")])
     )
+    ply_colors = rfn.unstructured_to_structured(
+        instance_colors,
+        dtype=np.dtype([("red", "u1"), ("green", "u1"), ("blue", "u1")]),
+    )
+    ply_vertices = rfn.merge_arrays((ply_coordinates, ply_colors), flatten=True)
+    vertex_element = PlyElement.describe(ply_vertices, "vertex")
+    elements = [vertex_element]
+    if "face" in ply_content:
+        elements.append(ply_content["face"])
+    PlyData(elements, text=True).write(output_instance_path)
 
 
 def write_predictions(

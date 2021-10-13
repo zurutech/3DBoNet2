@@ -186,7 +186,7 @@ def run() -> None:
         url=metadata["url"],
         version=metadata["version"],
         zip_safe=False,
-        scripts=["bin/bonet2-train.py"],  # TODO: rename and remove .py
+        scripts=["bin/bonet2-train.py", "bin/bonet2-predict.py"],
         # https://setuptools.readthedocs.io/en/latest/userguide/datafiles.html
         # The line below allows creating the wheel with the .o and .so
         # build just before calling this function

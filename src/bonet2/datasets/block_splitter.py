@@ -54,7 +54,7 @@ class BlockSplitter:
         Extract blocks of fixed size from a point cloud.
 
         Args:
-            pointcloud: Input point cloud. Shape (N, 3 + F).
+            pointcloud: Input point cloud. Shape (N, 3 + F + 2).
 
         Returns:
             Batch of blocks with shape (B, N, 9 + F + 2) where:
@@ -99,6 +99,7 @@ class BlockSplitter:
                     )
                 ]
                 block_points = np.concatenate((block_points, sampled_points), axis=0)
+            self._random_source.shuffle(block_points)
             blocks.extend(
                 np.split(block_points, block_points.shape[0] // self.block_points)
             )

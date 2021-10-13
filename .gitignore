@@ -3,6 +3,7 @@
 *_h5/
 log/
 output/
+output_*/
 outputs/
 *runs*/
 *.out
@@ -154,6 +155,3 @@ cython_debug/
 
 # Gitlab public
 public/
-
-# Dataset cache
-dataset_cache

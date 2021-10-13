@@ -83,7 +83,8 @@ class PlyInferenceDataset:
             ply_content["vertex"].data, dtype=np.float32
         )
         coordinates, features = pointcloud[:, :3], pointcloud[:, 3:]
-        features = self.config.feature_processor(features)
+        if self.config.feature_processor is not None:
+            features = self.config.feature_processor(features)
         return np.column_stack((coordinates, features))
 
     def get_named_block_dataset(self) -> tf.data.Dataset:
