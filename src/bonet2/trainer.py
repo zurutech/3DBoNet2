@@ -14,7 +14,7 @@
 """Train and evaluate a 3D-BoNet model"""
 
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import tensorflow as tf
@@ -88,6 +88,56 @@ class Trainer:
         )
 
     @tf.function
+    def _train_step(
+        self,
+        batch: tf.Tensor,
+        optimizer: tf.keras.optimizers.Optimizer,
+    ) -> Tuple[tf.Tensor]:
+        """
+        Train the model for a single step.
+
+        Args:
+            train_dataset: Dataset of training point cloud blocks.
+            optimizer: Optimizer of model parameters.
+            epoch: Index of the current epoch.
+            n_batches: Number of batches per epoch.
+        """
+        (
+            pointcloud,
+            segmentation_labels,
+            vertices_true,
+            mask_true,
+        ) = batch
+        with tf.GradientTape() as tape:
+            vertices, scores, mask_prob, segmentation_prob = self.model(
+                pointcloud, ground_truth_vertices=vertices_true, training=True
+            )
+            (
+                bbox_vertices_loss,
+                bbox_vertices_ce_loss,
+                bbox_vertices_iou_loss,
+                bbox_vertices_l2_loss,
+            ) = self.losses["bbox_vertices"](pointcloud, vertices_true, vertices)
+            bbox_scores_loss = self.losses["bbox_scores"](vertices_true, scores)
+            mask_loss = self.losses["mask"](mask_true, mask_prob)
+            segmentation_loss = self.losses["segmentation"](
+                segmentation_labels, segmentation_prob
+            )
+            loss_value = (
+                bbox_vertices_loss + bbox_scores_loss + mask_loss + segmentation_loss
+            )
+        grads = tape.gradient(loss_value, self.model.trainable_weights)
+        optimizer.apply_gradients(zip(grads, self.model.trainable_weights))
+        return (
+            loss_value,
+            segmentation_loss,
+            bbox_vertices_ce_loss,
+            bbox_vertices_iou_loss,
+            bbox_vertices_l2_loss,
+            bbox_scores_loss,
+            mask_loss,
+        )
+
     def _train_epoch(
         self,
         train_dataset: tf.data.Dataset,
@@ -104,40 +154,19 @@ class Trainer:
             epoch: Index of the current epoch.
             n_batches: Number of batches per epoch.
         """
-        log_interval = tf.constant(100, dtype=tf.int64)
+        log_interval = 100
         for step, batch in enumerate(train_dataset):
             (
-                pointcloud,
-                segmentation_labels,
-                vertices_true,
-                mask_true,
-            ) = batch
-            with tf.GradientTape() as tape:
-                vertices, scores, mask_prob, segmentation_prob = self.model(
-                    pointcloud, ground_truth_vertices=vertices_true, training=True
-                )
-                (
-                    bbox_vertices_loss,
-                    bbox_vertices_ce_loss,
-                    bbox_vertices_iou_loss,
-                    bbox_vertices_l2_loss,
-                ) = self.losses["bbox_vertices"](pointcloud, vertices_true, vertices)
-                bbox_scores_loss = self.losses["bbox_scores"](vertices_true, scores)
-                mask_loss = self.losses["mask"](mask_true, mask_prob)
-                segmentation_loss = self.losses["segmentation"](
-                    segmentation_labels, segmentation_prob
-                )
-                loss_value = (
-                    bbox_vertices_loss
-                    + bbox_scores_loss
-                    + mask_loss
-                    + segmentation_loss
-                )
-            grads = tape.gradient(loss_value, self.model.trainable_weights)
-            optimizer.apply_gradients(zip(grads, self.model.trainable_weights))
+                loss_value,
+                segmentation_loss,
+                bbox_vertices_ce_loss,
+                bbox_vertices_iou_loss,
+                bbox_vertices_l2_loss,
+                bbox_scores_loss,
+                mask_loss,
+            ) = self._train_step(batch, optimizer)
 
-            # Log results
-            if tf.math.not_equal(tf.math.mod(step, log_interval), 0):
+            if step % log_interval != 0:
                 continue
             log_step = epoch * n_batches + step
             tf.print(

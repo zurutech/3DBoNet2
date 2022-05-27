@@ -7,7 +7,7 @@ TensorFlow 2 implementation of [3DBoNet][1] designed for being almost completely
 ## Requirements
 
 - Python >= 3.8
-- TensorFlow >= 2.4
+- TensorFlow >= 2.9
 - CUDA >= 10
 - `pip install -r requirements.txt`
 

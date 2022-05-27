@@ -19,7 +19,7 @@ from typing import Tuple
 import tensorflow as tf
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def group_reduce_most_common(
     values: tf.Tensor, group_indices: tf.Tensor, validate: bool = False
 ) -> tf.Tensor:
@@ -64,7 +64,7 @@ def group_reduce_most_common(
     return common_values
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def group_reduce_sum(
     values: tf.Tensor, group_indices: tf.Tensor, validate: bool = False
 ) -> tf.Tensor:
@@ -96,10 +96,10 @@ def group_reduce_sum(
         value_rowids=tf.gather(group_indices, group_order),
         nrows=tf.math.reduce_max(group_indices) + 1,
     )
-    return tf.math.reduce_sum(groups, axis=-1)
+    return tf.math.reduce_sum(groups, axis=1)
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def unique_indices(
     indices: tf.Tensor, validate: bool = False
 ) -> Tuple[tf.Tensor, tf.Tensor]:
@@ -131,7 +131,7 @@ def unique_indices(
     return unique_indices, mapping
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def unique_indices_with_counts(
     indices: tf.Tensor, validate: bool = False
 ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
@@ -166,7 +166,7 @@ def unique_indices_with_counts(
     return unique_indices, mapping, counts
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def sparse_gather(
     sp_input: tf.SparseTensor,
     indices: tf.Tensor,
@@ -228,7 +228,7 @@ def sparse_gather(
     return gathered
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def select_entries(
     sp_input: tf.SparseTensor,
     entries_indices: tf.Tensor,
@@ -268,7 +268,7 @@ def select_entries(
     return selection
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def sparse_intersection(
     sp_input1: tf.SparseTensor, sp_input2: tf.SparseTensor
 ) -> tf.SparseTensor:
@@ -293,7 +293,7 @@ def sparse_intersection(
     return intersection
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def indices_in_sparse(
     indices: tf.Tensor,
     sp_input: tf.SparseTensor,
@@ -329,7 +329,7 @@ def indices_in_sparse(
     return mask
 
 
-@tf.function(experimental_relax_shapes=True)
+@tf.function(reduce_retracing=True)
 def entries_in_sparse(
     entries_indices: tf.Tensor,
     entries_values: tf.Tensor,

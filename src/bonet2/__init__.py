@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "1.0"
+__version__ = "1.1"
 __url__ = "https://github.com/zurutech/3DBoNet2"
 __author__ = "Machine Learning Team @ Zuru Tech"
 __email__ = "ml@zuru.tech"

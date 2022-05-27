@@ -76,7 +76,7 @@ class InstancePrecisionRecall(tf.keras.metrics.Metric):
             initializer="zeros",
         )
 
-    @tf.function(experimental_relax_shapes=True)
+    @tf.function(reduce_retracing=True)
     def update_state(
         self,
         instance_labels: tf.Tensor,

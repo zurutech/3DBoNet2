@@ -17,7 +17,7 @@ import os
 import re
 import subprocess
 import sys
-from distutils.spawn import find_executable
+from shutil import which
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -92,7 +92,7 @@ def compile_custom_op_cuda_code(cuda_file: Path, dest_path: Path) -> None:
         ValueError if dest_path does not exist.
     """
 
-    nvcc = find_executable("nvcc")
+    nvcc = which("nvcc")
     if not nvcc:
         raise ValueError("nvcc executable required in PATH")
 
@@ -128,7 +128,7 @@ def tf_sampling_build() -> None:
     cmd = (
         [
             "gcc",
-            "-std=c++11",
+            "-std=c++14",
             "src/bonet2/tf_ops/sampling/tf_sampling.cpp",  # cpp
             "src/bonet2/tf_ops/sampling/tf_sampling_g.cu.o",  # cuda lib to link
             "-o",

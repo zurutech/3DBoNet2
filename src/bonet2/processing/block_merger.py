@@ -110,7 +110,7 @@ class BlockMerger(tf.Module):
             name="instance_scores_counter",
         )
 
-    @tf.function(experimental_relax_shapes=True)
+    @tf.function(reduce_retracing=True)
     def _block_update(
         self,
         block_pointcloud: tf.Tensor,
@@ -380,7 +380,7 @@ class BlockMerger(tf.Module):
         # it is necessary to return a tf.Tensor.
         return tf.shape(self.grid_indices)[0]
 
-    @tf.function(experimental_relax_shapes=True)
+    @tf.function(reduce_retracing=True)
     def __call__(self, coordinates: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Get instance and semantic predictions from grid voxels.
